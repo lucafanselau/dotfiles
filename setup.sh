@@ -213,10 +213,17 @@ setup_fish() {
 		echo "$fish_path" | sudo tee -a /etc/shells >/dev/null
 	fi
 
-	# Set as default shell
+	# Set as default shell (try chsh, fall back to sudo usermod on Linux)
 	if [ "$SHELL" != "$fish_path" ]; then
 		info "Changing default shell to fish..."
-		chsh -s "$fish_path"
+		if chsh -s "$fish_path" 2>/dev/null; then
+			ok "Default shell changed via chsh"
+		elif [ "$OS" = "linux" ] && sudo usermod --shell "$fish_path" "$(whoami)" 2>/dev/null; then
+			ok "Default shell changed via usermod"
+		else
+			warn "Could not change default shell automatically."
+			warn "Run manually:  sudo chsh -s $fish_path $(whoami)"
+		fi
 	fi
 
 	# Install fisher + plugins
