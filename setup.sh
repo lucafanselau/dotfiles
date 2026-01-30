@@ -235,6 +235,8 @@ setup_fish() {
     '
 
 	ok "Fish configured with plugins"
+	echo ""
+	info "Run 'tide configure' to set up your prompt theme."
 }
 
 # ---------- Set up git config ----------
@@ -315,6 +317,7 @@ main() {
 	ok "All done! Open a new terminal (or run 'fish') to get started."
 	echo ""
 	info "Reminders:"
+	info "  - Run 'tide configure' to set up your fish prompt theme"
 	info "  - Run 'gh auth login' if you haven't authenticated yet"
 	info "  - Run 'nvim' to trigger lazy.nvim plugin installation"
 	info "  - Create ~/.config/git/config.local for machine-specific git secrets"
