@@ -57,7 +57,10 @@ install_packages() {
 		sudo apt-get update -qq
 		sudo apt-get install -y -qq \
 			git curl unzip build-essential \
-			fish neovim fzf ripgrep fd-find tmux jq
+			fish fzf ripgrep fd-find tmux jq
+
+		# Neovim — distro version is too old, install 0.10+ from GitHub
+		install_nvim_release
 
 		# Tools not in default repos — install via their own installers
 		install_gh_cli_apt
@@ -66,18 +69,21 @@ install_packages() {
 		install_zoxide
 		install_uv
 		install_dust_release
+		install_fnm
 		;;
 	dnf)
 		sudo dnf install -y \
 			git curl unzip gcc make \
-			fish neovim fzf ripgrep fd-find tmux jq
+			fish fzf ripgrep fd-find tmux jq
 
+		install_nvim_release
 		install_gh_cli_dnf
 		install_delta_release
 		install_eza_release
 		install_zoxide
 		install_uv
 		install_dust_release
+		install_fnm
 		;;
 	pacman)
 		sudo pacman -Syu --noconfirm \
@@ -86,6 +92,7 @@ install_packages() {
 			github-cli git-delta eza zoxide dust
 
 		install_uv
+		install_fnm
 		;;
 	brew)
 		brew install \
@@ -99,6 +106,50 @@ install_packages() {
 }
 
 # --- Individual installers for tools not in default repos ---
+
+install_nvim_release() {
+	local NVIM_VERSION="0.11.0"
+	local current_ver=""
+	if command_exists nvim; then
+		current_ver="$(nvim --version | head -1 | sed 's/NVIM v//')"
+	fi
+	# Need 0.10+
+	if [ -n "$current_ver" ] && [ "$(printf '%s\n' "0.10" "$current_ver" | sort -V | head -1)" = "0.10" ]; then
+		ok "Neovim $current_ver already installed (>= 0.10)"
+		return
+	fi
+	info "Installing Neovim v${NVIM_VERSION} (distro version too old for kickstart)..."
+	local arch
+	arch="$(uname -m)"
+	# 0.10+ uses nvim-linux-x86_64, older used nvim-linux64
+	local url="https://github.com/neovim/neovim/releases/download/v${NVIM_VERSION}/nvim-linux-${arch}.appimage"
+	curl -fsSL "$url" -o /tmp/nvim.appimage
+	chmod +x /tmp/nvim.appimage
+	# Try appimage directly, fall back to extraction (FUSE not available on many VPS)
+	if /tmp/nvim.appimage --version &>/dev/null; then
+		sudo mv /tmp/nvim.appimage /usr/local/bin/nvim
+	else
+		info "FUSE not available, extracting appimage..."
+		(cd /tmp && ./nvim.appimage --appimage-extract) &>/dev/null
+		sudo rm -rf /opt/nvim
+		sudo mv /tmp/squashfs-root /opt/nvim
+		sudo ln -sf /opt/nvim/usr/bin/nvim /usr/local/bin/nvim
+		rm -f /tmp/nvim.appimage
+	fi
+	ok "Neovim $(nvim --version | head -1) installed"
+}
+
+install_fnm() {
+	if command_exists fnm; then return; fi
+	info "Installing fnm (node version manager)..."
+	curl -fsSL https://fnm.vercel.app/install | bash
+	# Install LTS node (needed by Mason for LSPs like ts_ls, pyright, prettierd)
+	export PATH="$HOME/.local/share/fnm:$PATH"
+	eval "$(fnm env)" 2>/dev/null || true
+	fnm install --lts
+	fnm default lts-latest
+	ok "fnm + Node LTS installed"
+}
 
 install_gh_cli_apt() {
 	if command_exists gh; then return; fi
