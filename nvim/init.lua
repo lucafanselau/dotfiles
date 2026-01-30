@@ -115,7 +115,7 @@ vim.o.mouse = 'a'
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
 
--- Use a global statusline (recommended by avante.nvim)
+-- Use a global statusline
 vim.opt.laststatus = 3
 
 -- Sync clipboard between OS and Neovim.
@@ -352,7 +352,6 @@ require('lazy').setup({
 
       -- Document existing key chains
       spec = {
-        { '<leader>a', group = '[A]I' },
         { '<leader>f', group = '[F]ile' },
         { '<leader>p', group = '[P]roject' },
         { '<leader>g', group = '[G]it' },
@@ -864,13 +863,6 @@ require('lazy').setup({
     },
   },
 
-  { -- nvim-cmp compatibility sources for blink.cmp
-    'saghen/blink.compat',
-    version = '2.*',
-    lazy = true,
-    opts = {},
-  },
-
   { -- Autocompletion
     'saghen/blink.cmp',
     event = 'VimEnter',
@@ -948,35 +940,9 @@ require('lazy').setup({
       },
 
       sources = {
-        default = { 'lsp', 'path', 'snippets', 'lazydev', 'avante_commands', 'avante_mentions', 'avante_shortcuts', 'avante_files' },
+        default = { 'lsp', 'path', 'snippets', 'lazydev' },
         providers = {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
-
-          -- Avante (nvim-cmp style) sources via blink.compat
-          avante_commands = {
-            name = 'avante_commands',
-            module = 'blink.compat.source',
-            score_offset = 90, -- show at a higher priority than lsp
-            opts = {},
-          },
-          avante_files = {
-            name = 'avante_files',
-            module = 'blink.compat.source',
-            score_offset = 100, -- show at a higher priority than lsp
-            opts = {},
-          },
-          avante_mentions = {
-            name = 'avante_mentions',
-            module = 'blink.compat.source',
-            score_offset = 1000, -- show at a higher priority than lsp
-            opts = {},
-          },
-          avante_shortcuts = {
-            name = 'avante_shortcuts',
-            module = 'blink.compat.source',
-            score_offset = 1000, -- show at a higher priority than lsp
-            opts = {},
-          },
         },
       },
 
@@ -993,111 +959,6 @@ require('lazy').setup({
 
       -- Shows a signature help window while you type arguments for a function
       signature = { enabled = true },
-    },
-  },
-
-  { -- AI assistant (Cursor-like) for Neovim
-    'yetone/avante.nvim',
-    version = false, -- Never set this to "*"!
-    build = vim.fn.has 'win32' ~= 0
-        and 'powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false'
-        or 'make',
-    cmd = {
-      'AvanteAsk',
-      'AvanteBuild',
-      'AvanteChat',
-      'AvanteChatNew',
-      'AvanteHistory',
-      'AvanteClear',
-      'AvanteEdit',
-      'AvanteFocus',
-      'AvanteRefresh',
-      'AvanteStop',
-      'AvanteSwitchProvider',
-      'AvanteShowRepoMap',
-      'AvanteToggle',
-      'AvanteModels',
-      'AvanteSwitchSelectorProvider',
-    },
-    keys = {
-      { '<leader>aa', '<cmd>AvanteToggle<CR>', desc = '[A]I: Toggle Avante' },
-      { '<leader>an', '<cmd>AvanteAsk<CR>', desc = '[A]I: New ask' },
-    },
-    ---@module 'avante'
-    ---@type avante.Config
-    opts = function()
-      local function has_env(names)
-        for _, name in ipairs(names) do
-          if vim.env[name] and vim.env[name] ~= '' then
-            return true
-          end
-        end
-        return false
-      end
-
-      local provider = 'claude'
-      if has_env { 'AVANTE_ANTHROPIC_API_KEY', 'ANTHROPIC_API_KEY' } then
-        provider = 'claude'
-      elseif has_env { 'AVANTE_OPENAI_API_KEY', 'OPENAI_API_KEY' } then
-        provider = 'openai'
-      elseif has_env { 'AVANTE_AZURE_OPENAI_API_KEY', 'AZURE_OPENAI_API_KEY' } then
-        provider = 'azure'
-      elseif has_env { 'AVANTE_GEMINI_API_KEY', 'GEMINI_API_KEY' } then
-        provider = 'gemini'
-      elseif has_env { 'AVANTE_CO_API_KEY', 'CO_API_KEY' } then
-        provider = 'cohere'
-      end
-
-      return {
-        -- Use a project-local instructions file (place it in your repo root)
-        instructions_file = 'avante.md',
-
-        provider = provider,
-
-        -- Native selector currently has issues; telescope works well.
-        selector = { provider = 'telescope' },
-
-        -- Improve API key / prompt input UX
-        input = { provider = 'dressing' },
-
-        -- Safer default: require explicit approval before running tools
-        behaviour = { auto_approve_tool_permissions = false },
-
-        -- Handy prompt templates (trigger with `#refactor`, `#test`, etc)
-        shortcuts = {
-          {
-            name = 'refactor',
-            description = 'Refactor code',
-            details = 'Refactor with best practices while preserving behavior',
-            prompt = 'Please refactor this code following best practices, improving readability and maintainability while preserving functionality.',
-          },
-          {
-            name = 'test',
-            description = 'Generate tests',
-            details = 'Generate comprehensive unit tests, including edge cases',
-            prompt = 'Please generate comprehensive unit tests for this code, covering edge cases and error scenarios.',
-          },
-        },
-      }
-    end,
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      'MunifTanjim/nui.nvim',
-
-      -- UI/input niceties
-      { 'stevearc/dressing.nvim', opts = {} },
-
-      -- Render markdown in Avante windows
-      {
-        'MeanderingProgrammer/render-markdown.nvim',
-        ft = { 'markdown', 'Avante' },
-        opts = {
-          file_types = { 'markdown', 'Avante' },
-        },
-      },
-
-      -- Optional icons
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
     },
   },
 

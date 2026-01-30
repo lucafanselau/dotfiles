@@ -22,16 +22,50 @@ return {
       },
     },
     keys = {
-      -- Core: snipe to any match
+      -- ── s: Jump anywhere ──────────────────────────────────────────────
+      -- Press s, type characters to narrow, press a label to land there.
+      -- Works in normal, visual, and after an operator (d/y/c/etc).
+      --
+      --   Normal:   s  fo  <label>        → cursor jumps to that "fo"
+      --   Delete:   ds fo  <label>        → deletes from cursor to that "fo"
+      --   Yank:     ys fo  <label>        → yanks from cursor to that "fo"
+      --   Visual:   v  s   fo  <label>    → extends selection to that "fo"
       { 's', mode = { 'n', 'x', 'o' }, function() require('flash').jump() end, desc = 'Flash' },
 
-      -- Treesitter: select treesitter nodes (use ; and , to grow/shrink)
+      -- ── S: Treesitter select ──────────────────────────────────────────
+      -- Press S, every treesitter node (function, block, arg, string, etc)
+      -- around your cursor gets a label. Press a label to visually select
+      -- that entire node. Then ; to expand to parent, , to shrink back.
+      --
+      --   S  <label>       → visually selects that treesitter node
+      --   S  <label> ; ;   → keeps expanding to larger parent nodes
+      --   S  <label> ,     → shrinks back down
+      --
+      -- Once selected you can operate: d deletes it, y yanks it, c changes it.
       { 'S', mode = { 'n' }, function() require('flash').treesitter() end, desc = 'Flash Treesitter Select' },
 
-      -- Remote: operate on a distant location, then come back (e.g. yr → pick target → iw → yanks word remotely)
+      -- ── r: Remote action (operator-pending only) ──────────────────────
+      -- After pressing an operator (y/d/c), press r to flash-jump somewhere
+      -- else, do a motion THERE, and the operation happens at that remote
+      -- location. Your cursor comes back to where you started.
+      --
+      --   yr <label> iw    → yanks the word at <label>, cursor stays put
+      --   dr <label> ap    → deletes the paragraph at <label>, cursor stays put
+      --   cr <label> i(    → changes the contents of parens at <label>, cursor moves there
+      --
+      -- Think: "yank remote ... inner word"
       { 'r', mode = 'o', function() require('flash').remote() end, desc = 'Remote Flash' },
 
-      -- Treesitter search: search + select surrounding treesitter node (e.g. yR → type pattern → pick node)
+      -- ── R: Treesitter search (operator-pending + visual) ──────────────
+      -- After pressing an operator (y/d/c) or in visual mode, press R to
+      -- search for text. Around every match, treesitter nodes get labeled.
+      -- Pick a label to operate on that entire node.
+      --
+      --   yR  func  <label>   → yanks the entire function containing "func"
+      --   dR  foo   <label>   → deletes the treesitter node around "foo"
+      --   vR  bar   <label>   → visually selects the node around "bar"
+      --
+      -- Think: "yank Region ... search ... pick node"
       { 'R', mode = { 'o', 'x' }, function() require('flash').treesitter_search() end, desc = 'Treesitter Search' },
 
       -- Toggle flash during / or ? search
