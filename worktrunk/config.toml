@@ -1,0 +1,149 @@
+# Worktrunk User Config
+# Docs: https://worktrunk.dev/config/
+
+# Bare repo layout: worktrees as sibling directories of .git
+worktree-path = "../{{ branch | sanitize }}"
+
+[projects]
+
+[projects."github.com/odin-lab/monorepo"]
+approved-commands = [
+    """
+PRIMARY="{{ primary_worktree_path }}"
+[ -f "$PRIMARY/backend/.env" ] && cp "$PRIMARY/backend/.env" backend/.env || cp backend/.env.example backend/.env 2>/dev/null || true
+""",
+    """
+BACKEND_PORT="{{ ('api-' ~ branch) | hash_port }}"
+echo "VITE_API_URL=http://localhost:$BACKEND_PORT/api/v1" > frontend/.env
+""",
+    """
+BACKEND_PORT="{{ ('api-' ~ branch) | hash_port }}"
+echo "EXPO_PUBLIC_API_URL=http://localhost:$BACKEND_PORT/api/v1" > app/.env.local
+""",
+    "pnpm install --prefer-offline",
+    "cd backend && uv sync",
+    "wt step copy-ignored",
+    """
+S="{{ branch | sanitize }}"
+W="{{ worktree_path }}"
+FRONTEND_PORT="{{ branch | hash_port }}"
+BACKEND_PORT="{{ ('api-' ~ branch) | hash_port }}"
+APP_PORT="{{ ('app-' ~ branch) | hash_port }}"
+
+# Create session with 'dev' window
+tmux new-session -d -s "$S" -c "$W" -n dev
+
+# Build 5-pane layout
+tmux split-window -h -t "$S:dev" -c "$W"           # Right column
+tmux split-window -v -t "$S:dev.0" -c "$W"         # Bottom-left
+tmux split-window -v -t "$S:dev.2" -c "$W"         # Bottom-right
+tmux split-window -v -t "$S:dev.2" -c "$W"         # Bottom row (client)
+
+# Panes: 0=shell, 1=frontend, 2=backend, 3=app, 4=client
+# Start services
+tmux send-keys -t "$S:dev.2" "cd backend && PORT=$BACKEND_PORT uv run main.py" Enter
+tmux send-keys -t "$S:dev.1" "pnpm --filter frontend dev -- --port $FRONTEND_PORT" Enter
+tmux send-keys -t "$S:dev.3" "pnpm --filter app start -- --port $APP_PORT" Enter
+tmux send-keys -t "$S:dev.4" "pnpm --filter client dev" Enter
+
+# Focus on shell pane
+tmux select-pane -t "$S:dev.0"
+
+echo "✓ Session '$S' ready — attach with: tmux attach -t $S"
+echo "  Frontend: http://localhost:$FRONTEND_PORT"
+echo "  Backend:  http://localhost:$BACKEND_PORT"
+echo "  App:      http://localhost:$APP_PORT"
+""",
+    "tmux kill-session -t '{{ branch | sanitize }}' 2>/dev/null || true",
+    "lsof -ti :{{ branch | hash_port }} | xargs kill 2>/dev/null || true",
+    "lsof -ti :{{ ('api-' ~ branch) | hash_port }} | xargs kill 2>/dev/null || true",
+    "lsof -ti :{{ ('app-' ~ branch) | hash_port }} | xargs kill 2>/dev/null || true",
+    "pnpm --filter frontend tsc --noEmit",
+    "pnpm --filter app tsc --noEmit",
+    "pnpm --filter frontend lint",
+    "pnpm --filter app lint",
+    """
+PRIMARY="{{ primary_worktree_path }}"
+[ -f "$PRIMARY/frontend/.env" ] && cp "$PRIMARY/frontend/.env" frontend/.env || cp frontend/.env.template frontend/.env 2>/dev/null || true
+""",
+    """
+PRIMARY="{{ primary_worktree_path }}"
+[ -f "$PRIMARY/app/.env.local" ] && cp "$PRIMARY/app/.env.local" app/.env.local || true
+[ -f "$PRIMARY/app/.env.development.local" ] && cp "$PRIMARY/app/.env.development.local" app/.env.development.local || true
+""",
+    '''
+PRIMARY="{{ primary_worktree_path }}"
+[ -f "$PRIMARY/backend/.env" ] && cp "$PRIMARY/backend/.env" backend/.env || cp ../.env.backend backend/.env 2>/dev/null || true
+# write the cors origin (eg. frontend path)
+FRONTEND_PORT="{{ branch | hash_port }}"
+echo "
+CORS_ORIGINS=[\"http://localhost:$FRONTEND_PORT\"]" >> backend/.env
+''',
+    """
+S="{{ branch | sanitize }}"
+W="{{ worktree_path }}"
+FRONTEND_PORT="{{ branch | hash_port }}"
+BACKEND_PORT="{{ ('api-' ~ branch) | hash_port }}"
+APP_PORT="{{ ('app-' ~ branch) | hash_port }}"
+
+# Create session with 'dev' window
+tmux new-session -d -s "$S" -c "$W" -n dev
+
+# Build 5-pane layout
+tmux split-window -h -t "$S:dev" -c "$W"           # Right column
+tmux split-window -v -t "$S:dev.0" -c "$W"         # Bottom-left
+tmux split-window -v -t "$S:dev.2" -c "$W"         # Bottom-right
+tmux split-window -v -t "$S:dev.2" -c "$W"         # Bottom row (client)
+
+# Panes: 0=shell, 1=frontend, 2=backend, 3=app, 4=client
+# Start services
+tmux send-keys -t "$S:dev.2" "cd backend && PORT=$BACKEND_PORT uv run main.py" Enter
+tmux send-keys -t "$S:dev.1" "pnpm --filter frontend dev --port $FRONTEND_PORT" Enter
+tmux send-keys -t "$S:dev.3" "pnpm --filter app start -- --port $APP_PORT" Enter
+tmux send-keys -t "$S:dev.4" "pnpm --filter client dev" Enter
+
+# Focus on shell pane
+tmux select-pane -t "$S:dev.0"
+
+echo "✓ Session '$S' ready — attach with: tmux attach -t $S"
+echo "  Frontend: http://localhost:$FRONTEND_PORT"
+echo "  Backend:  http://localhost:$BACKEND_PORT"
+echo "  App:      http://localhost:$APP_PORT"
+""",
+    """
+S="{{ branch | sanitize }}"
+W="{{ worktree_path }}"
+FRONTEND_PORT="{{ branch | hash_port }}"
+BACKEND_PORT="{{ ('api-' ~ branch) | hash_port }}"
+APP_PORT="{{ ('app-' ~ branch) | hash_port }}"
+
+# Create session with 'dev' window
+tmux new-session -d -s "$S" -c "$W" -n dev
+
+# Build 5-pane layout
+tmux split-window -h -t "$S:dev" -c "$W"           # Right column
+tmux split-window -v -t "$S:dev.0" -c "$W"         # Bottom-left
+tmux split-window -v -t "$S:dev.2" -c "$W"         # Bottom-right
+tmux split-window -v -t "$S:dev.2" -c "$W"         # Bottom row (client)
+
+# Panes: 0=shell, 1=frontend, 2=backend, 3=app, 4=client
+# Start services
+tmux send-keys -t "$S:dev.2" "cd backend && PORT=$BACKEND_PORT uv run main.py" Enter
+tmux send-keys -t "$S:dev.1" "pnpm --filter frontend dev --port $FRONTEND_PORT" Enter
+tmux send-keys -t "$S:dev.3" "pnpm --filter app start --port $APP_PORT" Enter
+tmux send-keys -t "$S:dev.4" "pnpm --filter client dev" Enter
+
+# Focus on shell pane
+tmux select-pane -t "$S:dev.0"
+
+echo "✓ Session '$S' ready — attach with: tmux attach -t $S"
+echo "  Frontend: http://localhost:$FRONTEND_PORT"
+echo "  Backend:  http://localhost:$BACKEND_PORT"
+echo "  App:      http://localhost:$APP_PORT"
+""",
+    "pnpm --filter frontend exec tsc --noEmit",
+    "pnpm --filter app exec tsc --noEmit",
+]
+
+[commit.generation]
+command = "MAX_THINKING_TOKENS=0 claude -p --model=haiku --tools='' --disable-slash-commands --setting-sources='' --system-prompt=''"

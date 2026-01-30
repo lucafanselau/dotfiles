@@ -1,0 +1,50 @@
+# =============================================================================
+# Dotfiles repo — ignore everything, whitelist what we track
+# =============================================================================
+
+# Ignore everything by default
+*
+
+# ---------- Allow top-level repo files ----------
+!.gitignore
+!setup.sh
+
+# ---------- fish (only authored files, fisher reinstalls the rest) ----------
+!fish/
+fish/*
+!fish/config.fish
+!fish/fish_plugins
+
+# ---------- git ----------
+!git/
+git/*
+!git/config
+!git/ignore
+# NEVER track secrets
+git/config.local
+
+# ---------- gh (CLI config only, not tokens) ----------
+!gh/
+gh/*
+!gh/config.yml
+# NEVER track hosts.yml (contains oauth tokens)
+gh/hosts.yml
+
+# ---------- ghostty ----------
+!ghostty/
+ghostty/*
+!ghostty/config
+
+# ---------- nvim ----------
+!nvim/
+!nvim/**
+# Ignore nvim plugin build artifacts / lockfile churn
+nvim/lazy-lock.json
+nvim/.github/
+
+# ---------- worktrunk ----------
+!worktrunk/
+worktrunk/*
+!worktrunk/config.toml
+# Ignore lockfile
+worktrunk/config.toml.lock
