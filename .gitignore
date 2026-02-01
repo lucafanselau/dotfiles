@@ -48,3 +48,6 @@ worktrunk/*
 !worktrunk/config.toml
 # Ignore lockfile
 worktrunk/config.toml.lock
+
+# ---------- tmux --------
+!tmux/tmux.conf
