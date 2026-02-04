@@ -53,3 +53,8 @@ worktrunk/config.toml.lock
 !tmux/
 tmux/*
 !tmux/tmux.conf
+
+# ---------- opencode ----------
+!opencode/
+opencode/*
+!opencode/opencode.json
